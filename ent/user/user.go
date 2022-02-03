@@ -11,8 +11,17 @@ const (
 	FieldAge = "age"
 	// FieldName holds the string denoting the name field in the database.
 	FieldName = "name"
+	// EdgeTeams holds the string denoting the teams edge name in mutations.
+	EdgeTeams = "teams"
 	// Table holds the table name of the user in the database.
 	Table = "users"
+	// TeamsTable is the table that holds the teams relation/edge.
+	TeamsTable = "teams"
+	// TeamsInverseTable is the table name for the Team entity.
+	// It exists in this package in order to avoid circular dependency with the "team" package.
+	TeamsInverseTable = "teams"
+	// TeamsColumn is the table column denoting the teams relation/edge.
+	TeamsColumn = "user_teams"
 )
 
 // Columns holds all SQL columns for user fields.

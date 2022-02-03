@@ -16,7 +16,8 @@ type Team struct {
 	// ID of the ent.
 	ID int `json:"id,omitempty"`
 	// Name holds the value of the "name" field.
-	Name string `json:"name,omitempty"`
+	Name       string `json:"name,omitempty"`
+	user_teams *int
 }
 
 // scanValues returns the types for scanning values from sql.Rows.
@@ -28,6 +29,8 @@ func (*Team) scanValues(columns []string) ([]interface{}, error) {
 			values[i] = new(sql.NullInt64)
 		case team.FieldName:
 			values[i] = new(sql.NullString)
+		case team.ForeignKeys[0]: // user_teams
+			values[i] = new(sql.NullInt64)
 		default:
 			return nil, fmt.Errorf("unexpected column %q for type Team", columns[i])
 		}
@@ -54,6 +57,13 @@ func (t *Team) assignValues(columns []string, values []interface{}) error {
 				return fmt.Errorf("unexpected type %T for field name", values[i])
 			} else if value.Valid {
 				t.Name = value.String
+			}
+		case team.ForeignKeys[0]:
+			if value, ok := values[i].(*sql.NullInt64); !ok {
+				return fmt.Errorf("unexpected type %T for edge-field user_teams", value)
+			} else if value.Valid {
+				t.user_teams = new(int)
+				*t.user_teams = int(value.Int64)
 			}
 		}
 	}

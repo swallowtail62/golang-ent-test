@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go-ent-mysql/ent/team"
 	"go-ent-mysql/ent/user"
 
 	"entgo.io/ent/dialect/sql/sqlgraph"
@@ -29,6 +30,21 @@ func (uc *UserCreate) SetAge(i int) *UserCreate {
 func (uc *UserCreate) SetName(s string) *UserCreate {
 	uc.mutation.SetName(s)
 	return uc
+}
+
+// AddTeamIDs adds the "teams" edge to the Team entity by IDs.
+func (uc *UserCreate) AddTeamIDs(ids ...int) *UserCreate {
+	uc.mutation.AddTeamIDs(ids...)
+	return uc
+}
+
+// AddTeams adds the "teams" edges to the Team entity.
+func (uc *UserCreate) AddTeams(t ...*Team) *UserCreate {
+	ids := make([]int, len(t))
+	for i := range t {
+		ids[i] = t[i].ID
+	}
+	return uc.AddTeamIDs(ids...)
 }
 
 // Mutation returns the UserMutation object of the builder.
@@ -159,6 +175,25 @@ func (uc *UserCreate) createSpec() (*User, *sqlgraph.CreateSpec) {
 			Column: user.FieldName,
 		})
 		_node.Name = value
+	}
+	if nodes := uc.mutation.TeamsIDs(); len(nodes) > 0 {
+		edge := &sqlgraph.EdgeSpec{
+			Rel:     sqlgraph.O2M,
+			Inverse: false,
+			Table:   user.TeamsTable,
+			Columns: []string{user.TeamsColumn},
+			Bidi:    false,
+			Target: &sqlgraph.EdgeTarget{
+				IDSpec: &sqlgraph.FieldSpec{
+					Type:   field.TypeInt,
+					Column: team.FieldID,
+				},
+			},
+		}
+		for _, k := range nodes {
+			edge.Target.Nodes = append(edge.Target.Nodes, k)
+		}
+		_spec.Edges = append(_spec.Edges, edge)
 	}
 	return _node, _spec
 }

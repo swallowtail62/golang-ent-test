@@ -24,6 +24,7 @@ type TeamQuery struct {
 	order      []OrderFunc
 	fields     []string
 	predicates []predicate.Team
+	withFKs    bool
 	// intermediate query (i.e. traversal path).
 	sql  *sql.Selector
 	path func(context.Context) (*sql.Selector, error)
@@ -310,9 +311,13 @@ func (tq *TeamQuery) prepareQuery(ctx context.Context) error {
 
 func (tq *TeamQuery) sqlAll(ctx context.Context) ([]*Team, error) {
 	var (
-		nodes = []*Team{}
-		_spec = tq.querySpec()
+		nodes   = []*Team{}
+		withFKs = tq.withFKs
+		_spec   = tq.querySpec()
 	)
+	if withFKs {
+		_spec.Node.Columns = append(_spec.Node.Columns, team.ForeignKeys...)
+	}
 	_spec.ScanValues = func(columns []string) ([]interface{}, error) {
 		node := &Team{config: tq.config}
 		nodes = append(nodes, node)
