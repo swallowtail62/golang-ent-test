@@ -1,6 +1,9 @@
 package schema
 
-import "entgo.io/ent"
+import (
+	"entgo.io/ent"
+	"entgo.io/ent/schema/field"
+)
 
 // Team holds the schema definition for the Team entity.
 type Team struct {
@@ -9,7 +12,9 @@ type Team struct {
 
 // Fields of the Team.
 func (Team) Fields() []ent.Field {
-	return nil
+	return []ent.Field{
+		field.String("name"),
+	}
 }
 
 // Edges of the Team.

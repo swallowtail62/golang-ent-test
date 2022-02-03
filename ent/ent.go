@@ -5,6 +5,7 @@ package ent
 import (
 	"errors"
 	"fmt"
+	"go-ent-mysql/ent/team"
 	"go-ent-mysql/ent/user"
 
 	"entgo.io/ent"
@@ -29,6 +30,7 @@ type OrderFunc func(*sql.Selector)
 // columnChecker returns a function indicates if the column exists in the given column.
 func columnChecker(table string) func(string) error {
 	checks := map[string]func(string) bool{
+		team.Table: team.ValidColumn,
 		user.Table: user.ValidColumn,
 	}
 	check, ok := checks[table]
