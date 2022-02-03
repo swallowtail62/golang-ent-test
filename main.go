@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"go-ent-mysql/ent"
 	"go-ent-mysql/env"
+	"go-ent-mysql/repository"
 	"log"
 	"os"
 
@@ -30,4 +31,11 @@ func main() {
 	if err := client.Schema.Create(context.Background()); err != nil {
 		log.Fatalf("failed creating schema resources: %v", err)
 	}
+
+	userRepository := repository.NewUserRepository(client.Debug())
+	user, err := userRepository.CreateUser(context.Background(), "test user", 18)
+	if err != nil {
+		log.Fatalf("failed to create user: %v", err)
+	}
+	log.Printf("Succeeded creating user: %v", user)
 }
