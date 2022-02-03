@@ -1,0 +1,20 @@
+version: "3.8"
+
+services:
+  db:
+    image: mysql:5.7
+    platform: linux/amd64
+    environment:
+      MYSQL_DATABASE: enttest
+      MYSQL_USER: enter
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: rootpassword
+    ports:
+      - "3336:3306"
+    volumes:
+      - ./database/conf.d:/etc/mysql/conf.d:ro
+      - db_volume:/var/lib/mysql:delegated
+
+volumes:
+  db_volume:
+    driver: local
