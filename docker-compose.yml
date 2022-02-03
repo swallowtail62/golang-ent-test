@@ -16,6 +16,13 @@ services:
       - db_volume:/var/lib/mysql:delegated
   backend:
     build: .
+    environment:
+      WAIT_HOSTS: db:3306
+      APP_DB_HOST: db
+      APP_DB_PORT: 3306
+      APP_DB_DATABASE: enttest
+      APP_DB_USER: enter
+      APP_DB_PASSWORD: password
 
 volumes:
   db_volume:
