@@ -85,6 +85,33 @@ func main() {
 		}
 		c.JSON(http.StatusOK, gin.H{"user": user})
 	})
+	userRoutes.PATCH("/:userID", func(c *gin.Context) {
+		params := struct {
+			UserID int `uri:"userID" binding:"required"`
+		}{}
+		if err := c.ShouldBindUri(&params); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		payload := struct {
+			Name string `json:"name" binding:"required_without=Age"`
+			Age  int    `json:"age" binding:"required_without=Name"`
+		}{}
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := userRepository.Update(c, &repository.UserUpdatePayload{
+			ID:   params.UserID,
+			Name: payload.Name,
+			Age:  payload.Age,
+		})
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"user": user})
+	})
 
 	if err = r.Run(fmt.Sprintf(":%d", env.Conf.PORT)); err != nil {
 		log.Fatalf("The port %d is in use.", env.Conf.PORT)
