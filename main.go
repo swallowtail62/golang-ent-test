@@ -60,6 +60,31 @@ func main() {
 		}
 		c.JSON(http.StatusOK, gin.H{"user": user})
 	})
+	userRoutes.GET("", func(c *gin.Context) {
+		users, err := userRepository.FindAll(c)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"users": users})
+	})
+
+	type UserGetPayload struct {
+		UserID int `uri:"userID" binding:"required"`
+	}
+	userRoutes.GET("/:userID", func(c *gin.Context) {
+		var payload UserGetPayload
+		if err := c.ShouldBindUri(&payload); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := userRepository.FindByID(c, payload.UserID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"user": user})
+	})
 
 	if err = r.Run(fmt.Sprintf(":%d", env.Conf.PORT)); err != nil {
 		log.Fatalf("The port %d is in use.", env.Conf.PORT)
