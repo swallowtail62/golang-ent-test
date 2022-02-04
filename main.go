@@ -7,6 +7,7 @@ import (
 	"go-ent-mysql/env"
 	"go-ent-mysql/repository"
 	"log"
+	"net/http"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -14,11 +15,6 @@ import (
 )
 
 func main() {
-	r := gin.Default()
-	r.GET("/health-check", func(c *gin.Context) {
-		c.Status(200)
-	})
-
 	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		env.Conf.DBUser,
 		env.Conf.DBPassword,
@@ -28,7 +24,7 @@ func main() {
 	)
 	client, err := ent.Open("mysql", dataSource)
 	if err != nil {
-		log.Fatalf("failed opening connection to sqlite: %v", err)
+		log.Fatalf("failed opening connection to DB: %v", err)
 	}
 	defer client.Close()
 	if err := client.Schema.WriteTo(context.Background(), os.Stdout); err != nil {
@@ -39,14 +35,33 @@ func main() {
 	}
 
 	userRepository := repository.NewUserRepository(client.Debug())
-	user, err := userRepository.CreateUser(context.Background(), "test user", 18)
-	if err != nil {
-		log.Fatalf("failed to create user: %v", err)
-	}
-	log.Printf("Succeeded creating user: %v", user)
 
-	err = r.Run(fmt.Sprintf(":%d", env.Conf.PORT))
-	if err != nil {
+	r := gin.Default()
+	r.GET("/health-check", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
+
+	type UserCreatePayload struct {
+		Name string `json:"name" binding:"required"`
+		Age  int    `json:"age" binding:"required"`
+	}
+
+	userRoutes := r.Group("/user")
+	userRoutes.POST("", func(c *gin.Context) {
+		var payload UserCreatePayload
+		if err := c.ShouldBindJSON(&payload); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		user, err := userRepository.CreateUser(c, payload.Name, payload.Age)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"user": user})
+	})
+
+	if err = r.Run(fmt.Sprintf(":%d", env.Conf.PORT)); err != nil {
 		log.Fatalf("The port %d is in use.", env.Conf.PORT)
 	}
 }
