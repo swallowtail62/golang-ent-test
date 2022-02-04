@@ -6,13 +6,15 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	ut "github.com/go-playground/universal-translator"
+	"github.com/go-playground/validator/v10"
 )
 
 type userPathParams struct {
 	UserID int `uri:"userID" binding:"required"`
 }
 
-func RegisterUserRoutes(router gin.IRouter, dbClient *ent.Client) {
+func RegisterUserRoutes(router gin.IRouter, dbClient *ent.Client, translator ut.Translator) {
 	r := router.Group("/user")
 	userRepository := repository.NewUserRepository(dbClient)
 
@@ -44,11 +46,15 @@ func RegisterUserRoutes(router gin.IRouter, dbClient *ent.Client) {
 			return
 		}
 		payload := struct {
-			Name string `json:"name" binding:"required_without=Age"`
-			Age  int    `json:"age" binding:"required_without=Name"`
+			Name string `json:"name" binding:"required" ja:"名前"`
+			Age  int    `json:"age" binding:"required_without=Name" ja:"年齢"`
 		}{}
 		if err := c.ShouldBindJSON(&payload); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			if e, ok := err.(validator.ValidationErrors); ok {
+				c.JSON(http.StatusBadRequest, gin.H{"error": e.Translate(translator)})
+			} else {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			}
 			return
 		}
 		user, err := userRepository.Update(c, &repository.UserUpdatePayload{
