@@ -9,10 +9,16 @@ import (
 	"log"
 	"os"
 
+	"github.com/gin-gonic/gin"
 	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
+	r := gin.Default()
+	r.GET("/health-check", func(c *gin.Context) {
+		c.Status(200)
+	})
+
 	dataSource := fmt.Sprintf("%s:%s@tcp(%s:%d)/%s",
 		env.Conf.DBUser,
 		env.Conf.DBPassword,
@@ -38,4 +44,9 @@ func main() {
 		log.Fatalf("failed to create user: %v", err)
 	}
 	log.Printf("Succeeded creating user: %v", user)
+
+	err = r.Run(fmt.Sprintf(":%d", env.Conf.PORT))
+	if err != nil {
+		log.Fatalf("The port %d is in use.", env.Conf.PORT)
+	}
 }

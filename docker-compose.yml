@@ -18,11 +18,14 @@ services:
     build: .
     environment:
       WAIT_HOSTS: db:3306
+      APP_PORT: 8080
       APP_DB_HOST: db
       APP_DB_PORT: 3306
       APP_DB_DATABASE: enttest
       APP_DB_USER: enter
       APP_DB_PASSWORD: password
+    ports:
+      - "8080:8080"
 
 volumes:
   db_volume:
